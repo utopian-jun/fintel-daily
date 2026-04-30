@@ -1,0 +1,43 @@
+name: Fintel Daily Update
+
+on:
+  schedule:
+    # 평일(월~금) 21:30 UTC = 익일 06:30 KST  (미국장 마감 ~30분 후)
+    - cron: '30 21 * * 1-5'
+  workflow_dispatch:   # GitHub UI에서 수동 실행 가능
+
+jobs:
+  update:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Start Xvfb (virtual display — headless=False 우회)
+        run: |
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1920x1080x24 &
+          sleep 1
+
+      - name: Write service account JSON
+        run: echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > /tmp/service_account.json
+
+      - name: Run Fintel scraper & update Sheets
+        env:
+          DISPLAY: :99
+        run: python fintel_daily.py
