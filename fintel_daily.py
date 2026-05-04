@@ -216,7 +216,16 @@ def update_sheets(results: List[StockData]) -> None:
         for r in results
     }
 
-    creds   = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    # CI: 환경변수에서 직접 로드 (파일 쓰기 불필요) / 로컬: JSON 파일
+    sa_json_str = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "")
+    if IS_CI and sa_json_str:
+        import json as _json
+        creds = Credentials.from_service_account_info(
+            _json.loads(sa_json_str), scopes=SCOPES
+        )
+    else:
+        creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+
     service = build("sheets", "v4", credentials=creds)
     sheets  = service.spreadsheets()
 
