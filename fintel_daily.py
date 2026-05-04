@@ -37,11 +37,11 @@ else:
     CHROME_BIN  = "/usr/bin/google-chrome"
     DRIVER_PATH = None   # UC 자동 다운로드
 
-# 서비스 계정 파일 — CI 실행 시 워크플로우가 /tmp에 기록
+# 서비스 계정 파일 — Mac(로컬/self-hosted)은 항상 로컬 파일 사용
 SERVICE_ACCOUNT_FILE = (
-    "/tmp/service_account.json"
-    if IS_CI else
     "/Users/gsr/Desktop/Private/Google Sheets API_fintel.json"
+    if IS_MAC else
+    "/tmp/service_account.json"
 )
 
 # ── 상수 ──────────────────────────────────────────────────────────────────────
@@ -167,6 +167,9 @@ def scrape_fintel() -> List[StockData]:
                         driver.quit()
                     except Exception:
                         pass
+                    # 세션 재시작 전 Cloudflare 쿨다운
+                    print(f"\n  [세션 종료 — 30초 쿨다운 대기]\n")
+                    time.sleep(30)
                 if profile_dir and os.path.exists(profile_dir):
                     shutil.rmtree(profile_dir, ignore_errors=True)
                 profile_dir = tempfile.mkdtemp(prefix="cf_chrome_")
