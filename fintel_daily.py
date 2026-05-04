@@ -22,19 +22,27 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
 # ── 환경 감지 ──────────────────────────────────────────────────────────────────
-IS_CI = os.getenv("GITHUB_ACTIONS") == "true"
+import platform
+IS_CI  = os.getenv("GITHUB_ACTIONS") == "true"
+IS_MAC = platform.system() == "Darwin"
 
-if IS_CI:
-    CHROME_BIN           = "/usr/bin/google-chrome"
-    DRIVER_PATH          = None   # UC 자동 다운로드
-    SERVICE_ACCOUNT_FILE = "/tmp/service_account.json"
-else:
-    CHROME_BIN           = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-    DRIVER_PATH          = (
+# Chrome 경로 — OS 기준 (self-hosted Mac runner도 macOS이므로 동일)
+if IS_MAC:
+    CHROME_BIN  = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    DRIVER_PATH = (
         "/Users/gsr/Library/Application Support/"
         "undetected_chromedriver/undetected_chromedriver"
     )
-    SERVICE_ACCOUNT_FILE = "/Users/gsr/Desktop/Private/Google Sheets API_fintel.json"
+else:
+    CHROME_BIN  = "/usr/bin/google-chrome"
+    DRIVER_PATH = None   # UC 자동 다운로드
+
+# 서비스 계정 파일 — CI 실행 시 워크플로우가 /tmp에 기록
+SERVICE_ACCOUNT_FILE = (
+    "/tmp/service_account.json"
+    if IS_CI else
+    "/Users/gsr/Desktop/Private/Google Sheets API_fintel.json"
+)
 
 # ── 상수 ──────────────────────────────────────────────────────────────────────
 TICKERS = [

@@ -8,36 +8,20 @@ on:
 
 jobs:
   update:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted   # 내 Mac에서 실행 (Cloudflare 우회 + 로컬 Chrome 사용)
     timeout-minutes: 60
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: Install Python dependencies
-        run: pip install -r requirements.txt
-
-      - name: Install Google Chrome
-        run: |
-          sudo apt-get update -q
-          sudo apt-get install -y google-chrome-stable
-
-      - name: Start Xvfb (virtual display — headless=False 우회)
-        run: |
-          sudo apt-get install -y xvfb
-          Xvfb :99 -screen 0 1920x1080x24 &
-          sleep 1
+        run: pip3 install -r requirements.txt
 
       - name: Write service account JSON
-        run: echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > /tmp/service_account.json
+        env:
+          SA_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: printf '%s' "$SA_JSON" > /tmp/service_account.json
 
       - name: Run Fintel scraper & update Sheets
-        env:
-          DISPLAY: :99
-        run: python fintel_daily.py
+        run: python3 fintel_daily.py
